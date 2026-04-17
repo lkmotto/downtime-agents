@@ -1,0 +1,9 @@
+# Core
+playwright==1.44.0
+httpx==0.27.0
+pydantic==2.7.4
+python-dotenv==1.0.1
+
+# Playwright stealth — masks automation signals
+# (playwright-stealth wraps add_init_script with proven override bundle)
+playwright-stealth==1.0.6
