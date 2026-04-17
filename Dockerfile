@@ -1,11 +1,11 @@
 # ──────────────────────────────────────────────────────────────
 # DownTime Event Collection Agent
-# Northflank cron job — one-shot runner
+# Cron job — one-shot runner
 #
 # Build:   docker build -t downtime-agent .
 # Run:     docker run --env-file .env downtime-agent
 # ──────────────────────────────────────────────────────────────
-FROM python:3.12-slim
+FROM python:3.12-slim-bookworm
 
 # Install system dependencies required by Playwright / Chromium
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -26,9 +26,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libasound2 \
     libpango-1.0-0 \
     libcairo2 \
-    # Font support
+    # Font support (bookworm-compatible names)
     fonts-liberation \
     fonts-noto-color-emoji \
+    fonts-unifont \
     # Network / curl for healthchecks
     curl \
     # Cleanup
@@ -40,9 +41,8 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Install Playwright's Chromium browser + its dependencies
+# Install Playwright's Chromium browser (skip install-deps since we handle deps above)
 RUN playwright install chromium
-RUN playwright install-deps chromium
 
 # Copy application source
 COPY . .
@@ -55,7 +55,7 @@ RUN addgroup --system agent && adduser --system --ingroup agent agent
 RUN chown -R agent:agent /app
 USER agent
 
-# Environment defaults (override via Northflank environment variables)
+# Environment defaults
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     DATA_DIR=/app/data
