@@ -33,7 +33,8 @@ CATEGORY_FALLBACK_MAP = _agent_models.CATEGORY_FALLBACK_MAP
 EMAIL_CATEGORIES = _agent_models.EMAIL_CATEGORIES
 
 # ── Resolve backend path ───────────────────────────────────────────────────────
-BACKEND_DIR = os.path.join(_AGENT_DIR, "..", "downtime-product", "backend")
+# Backend modules are bundled in the local backend/ directory
+BACKEND_DIR = os.path.join(_AGENT_DIR, "backend")
 BACKEND_DIR = os.path.abspath(BACKEND_DIR)
 if BACKEND_DIR not in sys.path:
     sys.path.insert(0, BACKEND_DIR)
@@ -42,8 +43,12 @@ if BACKEND_DIR not in sys.path:
 # NOTE: after this point, bare `import models` resolves to the backend's models.
 import config as backend_config  # noqa: E402 — must come after sys.path patch
 
-# Monkey-patch backend config keys from our env vars so fetchers pick them up
-import config as _agent_config_raw  # noqa: E402
+# Monkey-patch backend config keys from our agent env vars so fetchers pick them up
+_agent_cfg_spec = importlib.util.spec_from_file_location(
+    "agent_config_raw", os.path.join(_AGENT_DIR, "config.py")
+)
+_agent_config_raw = importlib.util.module_from_spec(_agent_cfg_spec)  # type: ignore
+_agent_cfg_spec.loader.exec_module(_agent_config_raw)  # type: ignore
 
 backend_config.TM_API_KEY = _agent_config_raw.TM_API_KEY
 backend_config.SG_CLIENT_ID = _agent_config_raw.SG_CLIENT_ID
