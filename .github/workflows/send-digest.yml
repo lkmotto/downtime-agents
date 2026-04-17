@@ -1,0 +1,35 @@
+name: Friday Weekend Digest Email
+
+on:
+  schedule:
+    # Thursday 8pm CT = Friday 01:00 UTC
+    - cron: '0 1 * * 5'
+  workflow_dispatch:  # manual trigger
+
+jobs:
+  send-digest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    container:
+      image: ghcr.io/${{ github.repository }}:latest
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+      env:
+        RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+        RECIPIENT_EMAIL: ${{ secrets.RECIPIENT_EMAIL }}
+        TM_API_KEY: ${{ secrets.TM_API_KEY }}
+        SG_CLIENT_ID: ${{ secrets.SG_CLIENT_ID }}
+        SERPAPI_KEY: ${{ secrets.SERPAPI_KEY }}
+        OTM_API_KEY: ${{ secrets.OTM_API_KEY }}
+        EVENTBRITE_TOKEN: ${{ secrets.EVENTBRITE_TOKEN }}
+    steps:
+      - name: Send weekend digest
+        run: python -m agent
+      - name: Upload email preview
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: digest-preview-${{ github.run_number }}
+          path: /app/previews/
+          retention-days: 30
