@@ -6,6 +6,7 @@ API docs: https://www.eventbrite.com/platform/api
 
 Requires EVENTBRITE_TOKEN env var (OAuth private token).
 """
+
 import os
 import logging
 import math
@@ -170,7 +171,9 @@ async def fetch_eventbrite_events(
                     logger.warning("Eventbrite rate limit hit — stopping pagination")
                     break
                 if resp.status_code != 200:
-                    logger.warning(f"Eventbrite API error {resp.status_code}: {resp.text[:200]}")
+                    logger.warning(
+                        f"Eventbrite API error {resp.status_code}: {resp.text[:200]}"
+                    )
                     break
 
                 data = resp.json()
@@ -210,4 +213,7 @@ def fetch_eventbrite_events_sync(
 ) -> list[dict]:
     """Synchronous wrapper around fetch_eventbrite_events."""
     import asyncio
-    return asyncio.run(fetch_eventbrite_events(lat, lon, radius_miles, days_ahead, max_events))
+
+    return asyncio.run(
+        fetch_eventbrite_events(lat, lon, radius_miles, days_ahead, max_events)
+    )

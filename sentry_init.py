@@ -15,6 +15,7 @@ Environment:
     SENTRY_TRACES_SAMPLE_RATE  - traces sample rate, defaults to ``0.1``.
     GIT_SHA / RELEASE_SHA      - explicit release SHA; otherwise read from git.
 """
+
 from __future__ import annotations
 
 import functools

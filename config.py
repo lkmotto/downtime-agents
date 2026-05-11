@@ -3,6 +3,7 @@ Configuration for DownTime Event Collection Agent.
 
 Loads settings from environment variables / .env file.
 """
+
 import os
 from dataclasses import dataclass, field
 from dotenv import load_dotenv
@@ -12,8 +13,8 @@ load_dotenv()
 # ──────────────────────────────────────────────
 # Backend connection
 # ──────────────────────────────────────────────
-BACKEND_URL = os.getenv("BACKEND_URL", "")           # e.g. https://api.getdowntime.com
-BACKEND_API_KEY = os.getenv("BACKEND_API_KEY", "")   # optional bearer token
+BACKEND_URL = os.getenv("BACKEND_URL", "")  # e.g. https://api.getdowntime.com
+BACKEND_API_KEY = os.getenv("BACKEND_API_KEY", "")  # optional bearer token
 
 # ──────────────────────────────────────────────
 # Data output
@@ -80,6 +81,7 @@ BROWSER_ARGS = [
     "--mute-audio",
     "--disable-background-networking",
 ]
+
 
 # ──────────────────────────────────────────────
 # Cities — top 50 US cities with coordinates

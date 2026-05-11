@@ -17,19 +17,25 @@ Structure of AllEvents.in pages:
   - Each card has: title, date/time, venue, category chip, price, link, image
   - Infinite-scroll / "Load more" button for pagination
 """
+
 import asyncio
 import hashlib
 import logging
 import random
 import re
-from datetime import datetime
 from typing import Any
 
-from playwright.async_api import async_playwright, Page, BrowserContext, TimeoutError as PwTimeout
+from playwright.async_api import (
+    async_playwright,
+    Page,
+    BrowserContext,
+    TimeoutError as PwTimeout,
+)
 
 # playwright-stealth provides a battle-tested bundle of overrides
 try:
     from playwright_stealth import stealth_async as _stealth_async  # type: ignore
+
     _HAS_STEALTH = True
 except ImportError:  # pragma: no cover
     _HAS_STEALTH = False
@@ -92,16 +98,100 @@ CATEGORY_MAP: dict[str, str] = {
 }
 
 CATEGORY_KEYWORDS: dict[str, list[str]] = {
-    "music": ["concert", "live music", "band", "dj", "orchestra", "symphony", "jazz", "hip hop", "rock", "songwriter", "open mic"],
-    "sports": ["game", "match", "tournament", "race", "marathon", "5k", "baseball", "basketball", "football", "soccer", "hockey"],
-    "arts": ["art", "gallery", "exhibit", "museum", "theater", "theatre", "play", "musical", "ballet", "comedy", "stand-up"],
-    "food": ["food", "wine", "beer", "tasting", "brunch", "dinner", "cooking", "chef", "culinary", "brewery", "distillery"],
-    "outdoor": ["hike", "hiking", "trail", "park", "garden", "outdoor", "nature", "kayak", "bike", "cycling"],
-    "nightlife": ["club", "nightclub", "party", "dj set", "rave", "bar crawl", "happy hour", "lounge", "karaoke"],
+    "music": [
+        "concert",
+        "live music",
+        "band",
+        "dj",
+        "orchestra",
+        "symphony",
+        "jazz",
+        "hip hop",
+        "rock",
+        "songwriter",
+        "open mic",
+    ],
+    "sports": [
+        "game",
+        "match",
+        "tournament",
+        "race",
+        "marathon",
+        "5k",
+        "baseball",
+        "basketball",
+        "football",
+        "soccer",
+        "hockey",
+    ],
+    "arts": [
+        "art",
+        "gallery",
+        "exhibit",
+        "museum",
+        "theater",
+        "theatre",
+        "play",
+        "musical",
+        "ballet",
+        "comedy",
+        "stand-up",
+    ],
+    "food": [
+        "food",
+        "wine",
+        "beer",
+        "tasting",
+        "brunch",
+        "dinner",
+        "cooking",
+        "chef",
+        "culinary",
+        "brewery",
+        "distillery",
+    ],
+    "outdoor": [
+        "hike",
+        "hiking",
+        "trail",
+        "park",
+        "garden",
+        "outdoor",
+        "nature",
+        "kayak",
+        "bike",
+        "cycling",
+    ],
+    "nightlife": [
+        "club",
+        "nightclub",
+        "party",
+        "dj set",
+        "rave",
+        "bar crawl",
+        "happy hour",
+        "lounge",
+        "karaoke",
+    ],
     "film": ["film", "movie", "cinema", "screening", "documentary"],
-    "festivals": ["festival", "fest ", "fair", "carnival", "celebration", "block party", "street festival"],
+    "festivals": [
+        "festival",
+        "fest ",
+        "fair",
+        "carnival",
+        "celebration",
+        "block party",
+        "street festival",
+    ],
     "photography": ["photo", "photography", "camera", "photo walk"],
-    "motorsports": ["racing", "drag race", "nascar", "formula", "motocross", "monster truck"],
+    "motorsports": [
+        "racing",
+        "drag race",
+        "nascar",
+        "formula",
+        "motocross",
+        "monster truck",
+    ],
 }
 
 
@@ -142,7 +232,10 @@ def _parse_price(price_text: str) -> tuple[str, str]:
     # Generic "paid" hint
     if any(kw in pt for kw in ["paid", "ticket", "purchase", "buy"]):
         return ("See link", "Paid event — check link for pricing")
-    return ("Unknown", price_text[:120] if price_text else "Check event link for pricing")
+    return (
+        "Unknown",
+        price_text[:120] if price_text else "Check event link for pricing",
+    )
 
 
 def _parse_date(date_text: str) -> tuple[str | None, str]:
@@ -158,8 +251,8 @@ def _parse_date(date_text: str) -> tuple[str | None, str]:
         return (iso_match.group(1), text)
     # Month Day Year
     patterns = [
-        r"(\w+ \d{1,2},?\s*\d{4})",      # "March 15 2025"
-        r"(\w{3,},?\s*\w+ \d{1,2})",     # "Sat, Mar 15"
+        r"(\w+ \d{1,2},?\s*\d{4})",  # "March 15 2025"
+        r"(\w{3,},?\s*\w+ \d{1,2})",  # "Sat, Mar 15"
     ]
     for pat in patterns:
         m = re.search(pat, text)
@@ -276,7 +369,7 @@ def _extract_events_from_cards(cards: list[Any], city: str, state: str) -> list[
             description = (data.get("description") or "").strip()
             category_label = (data.get("category") or "").strip()
             price_text = (data.get("price") or "").strip()
-            image_url = (data.get("image") or None)
+            image_url = data.get("image") or None
 
             date_start, time_info = _parse_date(date_text)
             price_range, price_note = _parse_price(price_text)
@@ -469,10 +562,14 @@ async def fetch_allevents_events(
 
                 for page_url in pages_to_visit:
                     if request_count >= MAX_REQUESTS_PER_SITE:
-                        logger.info(f"AllEvents: hit MAX_REQUESTS_PER_SITE ({MAX_REQUESTS_PER_SITE}) for {city}")
+                        logger.info(
+                            f"AllEvents: hit MAX_REQUESTS_PER_SITE ({MAX_REQUESTS_PER_SITE}) for {city}"
+                        )
                         break
                     if len(all_events) >= MAX_EVENTS_PER_CITY:
-                        logger.info(f"AllEvents: hit MAX_EVENTS_PER_CITY ({MAX_EVENTS_PER_CITY}) for {city}")
+                        logger.info(
+                            f"AllEvents: hit MAX_EVENTS_PER_CITY ({MAX_EVENTS_PER_CITY}) for {city}"
+                        )
                         break
 
                     extracted = await _scrape_city_page(page, page_url, city, state)
@@ -481,7 +578,9 @@ async def fetch_allevents_events(
 
                     # Try to load more via "Load More" button or scroll-pagination
                     if extracted:
-                        loaded_more = await _try_load_more(page, context, city, state, request_count)
+                        loaded_more = await _try_load_more(
+                            page, context, city, state, request_count
+                        )
                         if loaded_more:
                             all_events.extend(loaded_more)
                             request_count += 1

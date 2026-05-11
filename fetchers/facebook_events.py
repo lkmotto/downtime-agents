@@ -16,18 +16,24 @@ Anti-detection:
   - Stealth JS overrides (no webdriver flag etc.)
   - Graceful block detection: log and skip rather than retry aggressively
 """
+
 import asyncio
 import hashlib
 import logging
 import random
 import re
-from datetime import datetime
 from typing import Any
 
-from playwright.async_api import async_playwright, Page, BrowserContext, TimeoutError as PwTimeout
+from playwright.async_api import (
+    async_playwright,
+    Page,
+    BrowserContext,
+    TimeoutError as PwTimeout,
+)
 
 try:
     from playwright_stealth import stealth_async as _stealth_async  # type: ignore
+
     _HAS_STEALTH = True
 except ImportError:  # pragma: no cover
     _HAS_STEALTH = False
@@ -38,7 +44,6 @@ from config import (
     BROWSER_ARGS,
     DELAY_MIN,
     DELAY_MAX,
-    MAX_REQUESTS_PER_SITE,
     MAX_EVENTS_PER_CITY,
 )
 from models import Event
@@ -53,14 +58,84 @@ GOOGLE_SEARCH = "https://www.google.com/search"
 # ──────────────────────────────────────────────
 
 CATEGORY_KEYWORDS: dict[str, list[str]] = {
-    "music": ["concert", "live music", "band", "dj", "orchestra", "symphony", "jazz", "hip hop", "rock", "songwriter"],
-    "sports": ["game", "match", "tournament", "race", "marathon", "5k", "baseball", "basketball", "football"],
-    "arts": ["art", "gallery", "exhibit", "museum", "theater", "theatre", "play", "ballet", "comedy", "stand-up"],
-    "food": ["food", "wine", "beer", "tasting", "brunch", "dinner", "cooking", "chef", "culinary", "brewery"],
-    "outdoor": ["hike", "hiking", "trail", "park", "garden", "outdoor", "nature", "kayak", "bike"],
-    "nightlife": ["club", "nightclub", "party", "dj set", "bar crawl", "happy hour", "lounge", "karaoke"],
+    "music": [
+        "concert",
+        "live music",
+        "band",
+        "dj",
+        "orchestra",
+        "symphony",
+        "jazz",
+        "hip hop",
+        "rock",
+        "songwriter",
+    ],
+    "sports": [
+        "game",
+        "match",
+        "tournament",
+        "race",
+        "marathon",
+        "5k",
+        "baseball",
+        "basketball",
+        "football",
+    ],
+    "arts": [
+        "art",
+        "gallery",
+        "exhibit",
+        "museum",
+        "theater",
+        "theatre",
+        "play",
+        "ballet",
+        "comedy",
+        "stand-up",
+    ],
+    "food": [
+        "food",
+        "wine",
+        "beer",
+        "tasting",
+        "brunch",
+        "dinner",
+        "cooking",
+        "chef",
+        "culinary",
+        "brewery",
+    ],
+    "outdoor": [
+        "hike",
+        "hiking",
+        "trail",
+        "park",
+        "garden",
+        "outdoor",
+        "nature",
+        "kayak",
+        "bike",
+    ],
+    "nightlife": [
+        "club",
+        "nightclub",
+        "party",
+        "dj set",
+        "bar crawl",
+        "happy hour",
+        "lounge",
+        "karaoke",
+    ],
     "film": ["film", "movie", "cinema", "screening", "documentary"],
-    "festivals": ["festival", "fest ", "fair", "carnival", "celebration", "block party", "street festival"],
+    "festivals": [
+        "festival",
+        "fest ",
+        "fair",
+        "carnival",
+        "celebration",
+        "block party",
+        "street festival",
+    ],
     "photography": ["photo", "photography", "camera", "photo walk"],
     "motorsports": ["racing", "drag race", "nascar", "formula", "motocross"],
 }
@@ -101,7 +176,9 @@ def _parse_attendee_count(text: str) -> int | None:
     if not text:
         return None
     # Handle K/M suffixes
-    m = re.search(r"([\d,]+(?:\.\d+)?)\s*([KkMm]?)\s*(?:interested|going|attending|people)", text)
+    m = re.search(
+        r"([\d,]+(?:\.\d+)?)\s*([KkMm]?)\s*(?:interested|going|attending|people)", text
+    )
     if m:
         num_str = m.group(1).replace(",", "")
         suffix = m.group(2).upper()
@@ -158,7 +235,9 @@ async def _inject_stealth(page: Page) -> None:
 async def _new_context(playwright_instance: Any) -> tuple[Any, BrowserContext]:
     ua = random.choice(USER_AGENT_POOL)
     viewport = random.choice(VIEWPORT_POOL)
-    browser = await playwright_instance.chromium.launch(headless=True, args=BROWSER_ARGS)
+    browser = await playwright_instance.chromium.launch(
+        headless=True, args=BROWSER_ARGS
+    )
     context = await browser.new_context(
         user_agent=ua,
         viewport=viewport,
@@ -184,6 +263,7 @@ async def _new_context(playwright_instance: Any) -> tuple[Any, BrowserContext]:
 # ──────────────────────────────────────────────
 # Facebook Events parser helpers
 # ──────────────────────────────────────────────
+
 
 def _parse_fb_cards(raw_cards: list[dict], city: str, state: str) -> list[Event]:
     events: list[Event] = []
@@ -244,6 +324,7 @@ def _parse_fb_cards(raw_cards: list[dict], city: str, state: str) -> list[Event]
 # Primary: Facebook Events search (no login)
 # ──────────────────────────────────────────────
 
+
 async def _fetch_from_facebook(
     page: Page,
     city: str,
@@ -263,7 +344,7 @@ async def _fetch_from_facebook(
 
     try:
         logger.info(f"Facebook: loading {url}")
-        resp = await page.goto(url, wait_until="domcontentloaded", timeout=30_000)
+        await page.goto(url, wait_until="domcontentloaded", timeout=30_000)
 
         await _random_delay(2.0, 4.0)
 
@@ -279,7 +360,9 @@ async def _fetch_from_facebook(
             "create an account" in page_text.lower() and len(page_text) < 2000,
         ]
         if any(block_signals):
-            logger.warning(f"Facebook: login wall detected for {city} — falling back to Google search")
+            logger.warning(
+                f"Facebook: login wall detected for {city} — falling back to Google search"
+            )
             blocked = True
             return events, blocked
 
@@ -360,6 +443,7 @@ async def _fetch_from_facebook(
 # Fallback: Google search → facebook.com/events
 # ──────────────────────────────────────────────
 
+
 async def _fetch_via_google(
     page: Page,
     city: str,
@@ -369,7 +453,7 @@ async def _fetch_via_google(
     Fall back to Googling: site:facebook.com/events [city state]
     Collects the event URLs from Google results, then visits each to extract data.
     """
-    query = f'site:facebook.com/events {city} {state} events'
+    query = f"site:facebook.com/events {city} {state} events"
     search_url = f"{GOOGLE_SEARCH}?q={query.replace(' ', '+')}&num=20"
 
     events: list[Event] = []
@@ -390,7 +474,9 @@ async def _fetch_via_google(
             }
         """)
 
-        logger.info(f"Facebook fallback: found {len(fb_urls)} event URLs via Google for {city}")
+        logger.info(
+            f"Facebook fallback: found {len(fb_urls)} event URLs via Google for {city}"
+        )
 
         # Visit each event page to extract details
         for fb_url in fb_urls[:10]:  # Cap at 10 individual pages
@@ -411,7 +497,9 @@ async def _fetch_via_google(
     return events
 
 
-async def _fetch_single_fb_event(page: Page, url: str, city: str, state: str) -> Event | None:
+async def _fetch_single_fb_event(
+    page: Page, url: str, city: str, state: str
+) -> Event | None:
     """
     Visit a single public Facebook event page and extract details.
     Returns None if login is required or extraction fails.
@@ -524,6 +612,7 @@ async def _fetch_single_fb_event(page: Page, url: str, city: str, state: str) ->
 # ──────────────────────────────────────────────
 # Public entry point
 # ──────────────────────────────────────────────
+
 
 async def fetch_facebook_events(
     city: str,

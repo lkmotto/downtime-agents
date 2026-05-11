@@ -14,6 +14,7 @@ Also assigns:
   - camera_worthy boolean + camera_note with specific shot ideas
   - scenario (date-night, solo, weekend-adventure, travel)
 """
+
 import math
 import re
 from models import Event
@@ -27,37 +28,93 @@ SCENARIO_RULES = {
     "date-night": {
         "categories": {"music", "arts", "food", "nightlife", "film"},
         "keywords": [
-            "dinner", "wine", "cocktail", "jazz", "romantic", "couples",
-            "tasting", "rooftop", "lounge", "ballet", "symphony", "theater",
-            "comedy", "speakeasy", "candlelight", "sunset", "date",
+            "dinner",
+            "wine",
+            "cocktail",
+            "jazz",
+            "romantic",
+            "couples",
+            "tasting",
+            "rooftop",
+            "lounge",
+            "ballet",
+            "symphony",
+            "theater",
+            "comedy",
+            "speakeasy",
+            "candlelight",
+            "sunset",
+            "date",
         ],
         "time_hints": ["evening", "pm", "night"],
     },
     "solo": {
         "categories": {"arts", "outdoor", "photography", "food"},
         "keywords": [
-            "museum", "gallery", "hike", "trail", "coffee", "bookstore",
-            "workshop", "class", "meditation", "yoga", "park", "garden",
-            "market", "walk", "solo", "self", "free",
+            "museum",
+            "gallery",
+            "hike",
+            "trail",
+            "coffee",
+            "bookstore",
+            "workshop",
+            "class",
+            "meditation",
+            "yoga",
+            "park",
+            "garden",
+            "market",
+            "walk",
+            "solo",
+            "self",
+            "free",
         ],
         "time_hints": ["morning", "am", "afternoon"],
     },
     "weekend-adventure": {
         "categories": {"outdoor", "festivals", "sports", "motorsports"},
         "keywords": [
-            "festival", "fair", "carnival", "adventure", "kayak", "bike",
-            "climb", "zipline", "tour", "day trip", "road trip", "camping",
-            "race", "marathon", "5k", "beach", "lake", "mountain",
-            "brewery tour", "winery", "escape room",
+            "festival",
+            "fair",
+            "carnival",
+            "adventure",
+            "kayak",
+            "bike",
+            "climb",
+            "zipline",
+            "tour",
+            "day trip",
+            "road trip",
+            "camping",
+            "race",
+            "marathon",
+            "5k",
+            "beach",
+            "lake",
+            "mountain",
+            "brewery tour",
+            "winery",
+            "escape room",
         ],
         "time_hints": [],
     },
     "travel": {
         "categories": {"outdoor", "arts", "food"},
         "keywords": [
-            "landmark", "monument", "historic", "attraction", "scenic",
-            "viewpoint", "national park", "state park", "architecture",
-            "downtown", "district", "neighborhood", "cultural", "heritage",
+            "landmark",
+            "monument",
+            "historic",
+            "attraction",
+            "scenic",
+            "viewpoint",
+            "national park",
+            "state park",
+            "architecture",
+            "downtown",
+            "district",
+            "neighborhood",
+            "cultural",
+            "heritage",
         ],
         "time_hints": [],
     },
@@ -150,11 +207,35 @@ CAMERA_SHOT_IDEAS = {
 }
 
 CAMERA_WORTHY_KEYWORDS = [
-    "outdoor", "park", "garden", "beach", "sunset", "sunrise", "mural",
-    "street art", "scenic", "view", "waterfront", "rooftop", "skyline",
-    "festival", "parade", "fireworks", "neon", "historic", "architecture",
-    "nature", "trail", "lake", "river", "mountain", "canyon",
-    "gallery", "art walk", "photo walk", "exhibit",
+    "outdoor",
+    "park",
+    "garden",
+    "beach",
+    "sunset",
+    "sunrise",
+    "mural",
+    "street art",
+    "scenic",
+    "view",
+    "waterfront",
+    "rooftop",
+    "skyline",
+    "festival",
+    "parade",
+    "fireworks",
+    "neon",
+    "historic",
+    "architecture",
+    "nature",
+    "trail",
+    "lake",
+    "river",
+    "mountain",
+    "canyon",
+    "gallery",
+    "art walk",
+    "photo walk",
+    "exhibit",
 ]
 
 
@@ -171,14 +252,26 @@ def _assign_camera(event: Event) -> tuple[bool, str | None]:
             break
 
     venue_lower = event.venue.lower()
-    for hint in ["park", "garden", "amphitheater", "amphitheatre", "field", "beach", "pier", "plaza", "square"]:
+    for hint in [
+        "park",
+        "garden",
+        "amphitheater",
+        "amphitheatre",
+        "field",
+        "beach",
+        "pier",
+        "plaza",
+        "square",
+    ]:
         if hint in venue_lower:
             is_worthy = True
             break
 
     note = None
     if is_worthy:
-        ideas = CAMERA_SHOT_IDEAS.get(event.category, ["A visually interesting spot worth capturing"])
+        ideas = CAMERA_SHOT_IDEAS.get(
+            event.category, ["A visually interesting spot worth capturing"]
+        )
         note = ideas[0]
 
     return is_worthy, note
@@ -188,12 +281,20 @@ def _assign_camera(event: Event) -> tuple[bool, str | None]:
 # Sub-scorers
 # ──────────────────────────────────────────────
 
+
 def _score_category_match(event: Event, user_interests: list[str] | None = None) -> int:
     if not user_interests:
         popular = {
-            "music": 20, "festivals": 20, "food": 18, "outdoor": 18,
-            "arts": 15, "nightlife": 15, "sports": 14, "film": 12,
-            "photography": 12, "motorsports": 10,
+            "music": 20,
+            "festivals": 20,
+            "food": 18,
+            "outdoor": 18,
+            "arts": 15,
+            "nightlife": 15,
+            "sports": 14,
+            "film": 12,
+            "photography": 12,
+            "motorsports": 10,
         }
         return popular.get(event.category, 12)
     if event.category in user_interests:
@@ -218,10 +319,21 @@ def _score_camera_value(event: Event) -> int:
     score = 15
     text = f"{event.title} {event.description} {' '.join(event.tags)}".lower()
     visual_bonuses = [
-        ("sunset", 3), ("sunrise", 3), ("mural", 2), ("street art", 2),
-        ("skyline", 3), ("panoramic", 3), ("fireworks", 3), ("waterfront", 2),
-        ("neon", 2), ("garden", 2), ("festival", 2), ("outdoor", 2),
-        ("scenic", 3), ("viewpoint", 3), ("rooftop", 2),
+        ("sunset", 3),
+        ("sunrise", 3),
+        ("mural", 2),
+        ("street art", 2),
+        ("skyline", 3),
+        ("panoramic", 3),
+        ("fireworks", 3),
+        ("waterfront", 2),
+        ("neon", 2),
+        ("garden", 2),
+        ("festival", 2),
+        ("outdoor", 2),
+        ("scenic", 3),
+        ("viewpoint", 3),
+        ("rooftop", 2),
     ]
     bonus = sum(pts for kw, pts in visual_bonuses if kw in text)
     return min(score + bonus, 25)
@@ -266,7 +378,9 @@ def _haversine_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     dlon = math.radians(lon2 - lon1)
     a = (
         math.sin(dlat / 2) ** 2
-        + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlon / 2) ** 2
+        + math.cos(math.radians(lat1))
+        * math.cos(math.radians(lat2))
+        * math.sin(dlon / 2) ** 2
     )
     c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
     return R * c
@@ -292,13 +406,31 @@ def _score_proximity(event: Event, city_lat: float, city_lon: float) -> int:
 def _score_uniqueness(event: Event) -> int:
     text = f"{event.title} {event.description}".lower()
     unique_keywords = [
-        "festival", "premiere", "grand opening", "one night only",
-        "special", "exclusive", "limited", "popup", "pop-up",
-        "farewell", "final", "inaugural", "annual", "celebration",
+        "festival",
+        "premiere",
+        "grand opening",
+        "one night only",
+        "special",
+        "exclusive",
+        "limited",
+        "popup",
+        "pop-up",
+        "farewell",
+        "final",
+        "inaugural",
+        "annual",
+        "celebration",
     ]
     recurring_keywords = [
-        "every week", "weekly", "every day", "daily", "recurring",
-        "open daily", "permanent", "ongoing", "always",
+        "every week",
+        "weekly",
+        "every day",
+        "daily",
+        "recurring",
+        "open daily",
+        "permanent",
+        "ongoing",
+        "always",
     ]
     unique_score = 8
     for kw in unique_keywords:
@@ -319,6 +451,7 @@ def _score_uniqueness(event: Event) -> int:
 # Public API
 # ──────────────────────────────────────────────
 
+
 def score_event(
     event: Event,
     city_lat: float = 0.0,
@@ -329,12 +462,24 @@ def score_event(
     camera_worthy, camera_note = _assign_camera(event)
 
     category_score = _score_category_match(event, user_interests)
-    camera_score = _score_camera_value(event.model_copy(update={"camera_worthy": camera_worthy}))
+    camera_score = _score_camera_value(
+        event.model_copy(update={"camera_worthy": camera_worthy})
+    )
     price_score = _score_price_value(event)
     proximity_score = _score_proximity(event, city_lat, city_lon)
     uniqueness_score = _score_uniqueness(event)
 
-    total = max(0, min(category_score + camera_score + price_score + proximity_score + uniqueness_score, 100))
+    total = max(
+        0,
+        min(
+            category_score
+            + camera_score
+            + price_score
+            + proximity_score
+            + uniqueness_score,
+            100,
+        ),
+    )
     scenario = _assign_scenario(event)
 
     return event.model_copy(
