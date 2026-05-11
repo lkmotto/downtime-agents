@@ -14,6 +14,8 @@ Usage:
     python agent.py --dry-run  # Curate + compose but don't send
     python agent.py --test     # Send a test email only
 """
+import sentry_init  # noqa: E402,F401
+
 import asyncio
 import logging
 import sys
@@ -170,4 +172,10 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    import sentry_sdk as _sentry_sdk
+    try:
+        main()
+    except Exception as _exc:
+        _sentry_sdk.capture_exception(_exc)
+        raise
+

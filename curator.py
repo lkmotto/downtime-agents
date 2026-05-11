@@ -7,6 +7,8 @@ scores them, filters the top N, and groups them into email-ready buckets.
 Imports fetchers and scoring engine directly from the backend codebase
 (path added via sys.path) so there's no duplication of logic.
 """
+import sentry_init  # noqa: E402,F401
+
 import asyncio
 import logging
 import sys
@@ -349,20 +351,26 @@ async def curate_weekend(
 
 
 if __name__ == "__main__":
-    import config
+    import sentry_sdk as _sentry_sdk
+    try:
+        import config
 
-    logging.basicConfig(level=logging.INFO)
-    result = asyncio.run(
-        curate_weekend(
-            city=config.CITY,
-            state=config.STATE,
-            lat=config.CITY_LAT,
-            lon=config.CITY_LON,
-            top_n=config.TOP_N_EVENTS,
+        logging.basicConfig(level=logging.INFO)
+        result = asyncio.run(
+            curate_weekend(
+                city=config.CITY,
+                state=config.STATE,
+                lat=config.CITY_LAT,
+                lon=config.CITY_LON,
+                top_n=config.TOP_N_EVENTS,
+            )
         )
-    )
-    print(f"\nCurated weekend: {result.weekend_start} – {result.weekend_end}")
-    for cat, evts in result.buckets.items():
-        print(f"\n[{cat}]")
-        for e in evts:
-            print(f"  • {e.title} | Score: {e.score} | {e.price_range}")
+        print(f"\nCurated weekend: {result.weekend_start} – {result.weekend_end}")
+        for cat, evts in result.buckets.items():
+            print(f"\n[{cat}]")
+            for e in evts:
+                print(f"  • {e.title} | Score: {e.score} | {e.price_range}")
+    except Exception as _exc:
+        _sentry_sdk.capture_exception(_exc)
+        raise
+

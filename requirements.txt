@@ -14,3 +14,4 @@ python-dotenv==1.0.1
 
 # Async support (stdlib in Python 3.12 — listed for clarity)
 # asyncio is part of stdlib
+sentry-sdk[asyncio]>=2.0
