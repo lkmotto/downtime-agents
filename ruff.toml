@@ -1,0 +1,6 @@
+# Added by MOT-29 (cyclomatic complexity gate).
+[lint]
+extend-select = ["C90"]
+
+[lint.mccabe]
+max-complexity = 12

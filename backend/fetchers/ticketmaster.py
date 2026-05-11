@@ -233,7 +233,7 @@ def _normalize_event(raw: dict, city_name: str, state_code: str) -> Event:
     )
 
 
-async def fetch_ticketmaster_events(
+async def fetch_ticketmaster_events(  # noqa: C901
     city: str,
     state: str,
     lat: float | None = None,
