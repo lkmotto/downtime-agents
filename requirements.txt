@@ -7,3 +7,4 @@ python-dotenv==1.0.1
 # Playwright stealth — masks automation signals
 # (playwright-stealth wraps add_init_script with proven override bundle)
 playwright-stealth==1.0.6
+sentry-sdk[asyncio]>=2.0

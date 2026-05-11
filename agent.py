@@ -13,6 +13,7 @@ Usage:
 Designed to run as a Northflank cron job: CMD ["python", "-m", "agent"]
 """
 from __future__ import annotations
+import sentry_init  # noqa: E402,F401
 
 import argparse
 import asyncio
@@ -381,6 +382,12 @@ Examples:
 
 
 if __name__ == "__main__":
-    args = _parse_args()
-    city_names = [c.strip() for c in args.cities.split(",") if c.strip()] or None
-    asyncio.run(run(city_names=city_names, dry_run=args.dry_run))
+    import sentry_sdk as _sentry_sdk
+    try:
+        args = _parse_args()
+        city_names = [c.strip() for c in args.cities.split(",") if c.strip()] or None
+        asyncio.run(run(city_names=city_names, dry_run=args.dry_run))
+    except Exception as _exc:
+        _sentry_sdk.capture_exception(_exc)
+        raise
+
