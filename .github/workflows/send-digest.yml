@@ -1,10 +1,6 @@
 name: Friday Weekend Digest Email
 
-on:
-  schedule:
-    # Thursday 8pm CT = Friday 01:00 UTC
-    - cron: '0 1 * * 5'
-  workflow_dispatch:  # manual trigger
+on: workflow_dispatch:
 
 jobs:
   send-digest:
