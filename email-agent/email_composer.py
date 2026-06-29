@@ -14,6 +14,7 @@ Design system:
   Camera badge: #F59E0B bg, #0D0D12 text
   Free badge:   #10B981 (emerald green)
 """
+
 import html
 import random
 import os
@@ -63,15 +64,16 @@ CATEGORY_ICONS: dict[str, str] = {
 }
 
 CATEGORY_COLORS: dict[str, str] = {
-    "Date Night": "#C084FC",        # purple
+    "Date Night": "#C084FC",  # purple
     "Adventure / Outdoors": "#34D399",  # emerald
-    "Food & Drink": "#FB923C",      # orange
-    "Arts & Culture": "#60A5FA",    # blue
-    "Free Things": "#10B981",       # green
+    "Food & Drink": "#FB923C",  # orange
+    "Arts & Culture": "#60A5FA",  # blue
+    "Free Things": "#10B981",  # green
 }
 
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
+
 
 def _esc(text: str) -> str:
     """HTML-escape a string."""
@@ -94,18 +96,18 @@ def _format_date(time_info: str, date_start: Optional[str]) -> str:
 def _camera_badge_html() -> str:
     return (
         '<span style="display:inline-block;background:#F59E0B;color:#0D0D12;'
-        'font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;'
+        "font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;"
         'padding:3px 8px;border-radius:4px;margin-left:8px;vertical-align:middle;">'
-        '📷 Camera-Worthy</span>'
+        "📷 Camera-Worthy</span>"
     )
 
 
 def _free_badge_html() -> str:
     return (
         '<span style="display:inline-block;background:#10B981;color:#fff;'
-        'font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;'
+        "font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;"
         'padding:3px 8px;border-radius:4px;margin-left:8px;vertical-align:middle;">'
-        'FREE</span>'
+        "FREE</span>"
     )
 
 
@@ -118,7 +120,13 @@ def _render_event_card(event: Event, index: int) -> str:
         city_state = _esc(f"{event.city}, {event.state}" if event.state else event.city)
     date_str = _esc(_format_date(event.time_info, event.date_start))
     price = _esc(event.price_range) if event.price_range else "See link"
-    why_go = _esc(event.why_go) if event.why_go else _esc(event.description[:200] + ("…" if len(event.description) > 200 else ""))
+    why_go = (
+        _esc(event.why_go)
+        if event.why_go
+        else _esc(
+            event.description[:200] + ("…" if len(event.description) > 200 else "")
+        )
+    )
     source_url = event.source_url or "#"
 
     # Badges
@@ -131,7 +139,7 @@ def _render_event_card(event: Event, index: int) -> str:
     # Image section (only if image_url exists)
     image_html = ""
     if event.image_url:
-        image_html = f'''
+        image_html = f"""
         <a href="{_esc(source_url)}" target="_blank" style="display:block;text-decoration:none;">
           <img src="{_esc(event.image_url)}"
                alt="{title}"
@@ -139,7 +147,7 @@ def _render_event_card(event: Event, index: int) -> str:
                style="width:100%;max-width:560px;height:180px;object-fit:cover;
                       display:block;border-radius:8px 8px 0 0;border:0;"
           />
-        </a>'''
+        </a>"""
 
     # Card top border color based on category
     border_color = CATEGORY_COLORS.get(event.email_category, "#F59E0B")
@@ -152,9 +160,13 @@ def _render_event_card(event: Event, index: int) -> str:
         location_parts.append(city_state)
     location_str = " · ".join(location_parts)
 
-    cta_label = "Get Tickets" if event.price_range.lower() not in ("free", "$0", "unknown", "") else "View Details"
+    cta_label = (
+        "Get Tickets"
+        if event.price_range.lower() not in ("free", "$0", "unknown", "")
+        else "View Details"
+    )
 
-    card = f'''
+    card = f"""
     <!--[if mso]><table width="100%"><tr><td><![endif]-->
     <div style="background:#16161F;border-radius:10px;margin-bottom:16px;
                 border:1px solid #252533;border-top:3px solid {border_color};
@@ -194,7 +206,7 @@ def _render_event_card(event: Event, index: int) -> str:
 
       </div>
     </div>
-    <!--[if mso]></td></tr></table><![endif]-->'''
+    <!--[if mso]></td></tr></table><![endif]-->"""
 
     return card
 
@@ -205,7 +217,7 @@ def _render_category_section(category: str, events: list[Event]) -> str:
     color = CATEGORY_COLORS.get(category, "#F59E0B")
     cards_html = "".join(_render_event_card(e, i) for i, e in enumerate(events))
 
-    section = f'''
+    section = f"""
     <!-- Category: {category} -->
     <div style="margin-bottom:32px;">
       <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:14px;">
@@ -220,7 +232,7 @@ def _render_category_section(category: str, events: list[Event]) -> str:
         </tr>
       </table>
       {cards_html}
-    </div>'''
+    </div>"""
 
     return section
 
@@ -245,12 +257,16 @@ def build_html_email(weekend: CuratedWeekend) -> str:
 
     total_events = sum(len(evts) for evts in weekend.buckets.values())
     camera_count = sum(1 for e in weekend.all_events if e.camera_worthy)
-    free_count = sum(1 for e in weekend.all_events if e.price_range.lower() in ("free", "$0"))
+    free_count = sum(
+        1 for e in weekend.all_events if e.price_range.lower() in ("free", "$0")
+    )
 
     # Stats bar
     stats_items = [f"<strong style='color:#F0EEE8;'>{total_events}</strong> picks"]
     if camera_count:
-        stats_items.append(f"<strong style='color:#F59E0B;'>{camera_count}</strong> camera-worthy")
+        stats_items.append(
+            f"<strong style='color:#F59E0B;'>{camera_count}</strong> camera-worthy"
+        )
     if free_count:
         stats_items.append(f"<strong style='color:#10B981;'>{free_count}</strong> free")
     stats_html = " · ".join(stats_items)

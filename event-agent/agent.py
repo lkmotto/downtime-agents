@@ -15,6 +15,7 @@ Designed to run as a Northflank cron job: CMD ["python", "-m", "agent"]
 
 from __future__ import annotations
 from motto_common.sentry_init import init_sentry  # was: import sentry_init
+
 init_sentry(agent_name="downtime-event-agent")
 
 import argparse

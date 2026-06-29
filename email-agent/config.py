@@ -3,6 +3,7 @@ Configuration for the DownTime Weekend Email Digest Agent.
 
 All values are loaded from environment variables. See .env.example for reference.
 """
+
 import os
 from dotenv import load_dotenv
 
@@ -17,7 +18,7 @@ RECIPIENT_EMAIL: str = os.getenv("RECIPIENT_EMAIL", "ljm32901@gmail.com")
 # ── Location ───────────────────────────────────────────────────────────────────
 CITY: str = os.getenv("CITY", "Dallas")
 STATE: str = os.getenv("STATE", "TX")
-CITY_LAT: float = float(os.getenv("CITY_LAT", "32.7767"))   # Dallas city center
+CITY_LAT: float = float(os.getenv("CITY_LAT", "32.7767"))  # Dallas city center
 CITY_LON: float = float(os.getenv("CITY_LON", "-96.7970"))
 
 # ── User profile ───────────────────────────────────────────────────────────────
@@ -35,5 +36,5 @@ OTM_API_KEY: str = os.getenv("OTM_API_KEY", "")
 
 # ── Curation settings ──────────────────────────────────────────────────────────
 TOP_N_EVENTS: int = int(os.getenv("TOP_N_EVENTS", "10"))
-FETCH_DAYS_AHEAD: int = 4   # Friday–Sunday = ~3 days from Thursday
+FETCH_DAYS_AHEAD: int = 4  # Friday–Sunday = ~3 days from Thursday
 FETCH_PAGE_SIZE: int = 100

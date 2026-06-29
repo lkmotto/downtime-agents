@@ -14,9 +14,11 @@ When ``LANGFUSE_PUBLIC_KEY`` and ``LANGFUSE_SECRET_KEY`` are both set the SDK
 sends authenticated traces. If they are missing the exporter still starts but
 will receive unauthenticated requests (Langfuse will reject them).
 """
+
 from __future__ import annotations
 
 from motto_common.sentry_init import init_sentry  # was: import sentry_init
+
 init_sentry(agent_name="downtime-email-agent")
 
 import os
@@ -53,9 +55,7 @@ def init_observability(service_name: str = "downtime-email-agent") -> trace.Trac
     if public_key and secret_key:
         headers = _basic_auth_header(public_key, secret_key)
 
-    provider = TracerProvider(
-        resource=Resource.create({"service.name": service_name})
-    )
+    provider = TracerProvider(resource=Resource.create({"service.name": service_name}))
     exporter = OTLPSpanExporter(endpoint=endpoint, headers=headers)
     provider.add_span_processor(BatchSpanProcessor(exporter))
     trace.set_tracer_provider(provider)

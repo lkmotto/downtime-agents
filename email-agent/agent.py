@@ -14,7 +14,9 @@ Usage:
     python agent.py --dry-run  # Curate + compose but don't send
     python agent.py --test     # Send a test email only
 """
+
 from motto_common.sentry_init import init_sentry  # was: import sentry_init
+
 init_sentry(agent_name="downtime-email-agent")
 
 import asyncio
@@ -38,8 +40,11 @@ logger = logging.getLogger("downtime-agent")
 # Load by absolute path to avoid shadowing from any other config modules.
 import importlib.util as _ilu
 import os as _os
+
 _AGENT_DIR = _os.path.dirname(_os.path.abspath(__file__))
-_cfg_spec = _ilu.spec_from_file_location("agent_config_ns", _os.path.join(_AGENT_DIR, "config.py"))
+_cfg_spec = _ilu.spec_from_file_location(
+    "agent_config_ns", _os.path.join(_AGENT_DIR, "config.py")
+)
 config = _ilu.module_from_spec(_cfg_spec)  # type: ignore
 _cfg_spec.loader.exec_module(config)  # type: ignore
 
@@ -49,6 +54,7 @@ from sender import send_email, send_test_email, SendError
 
 
 # ── Pipeline ───────────────────────────────────────────────────────────────────
+
 
 async def run(dry_run: bool = False) -> bool:
     """
@@ -84,7 +90,9 @@ async def run(dry_run: bool = False) -> bool:
 
     total_events = sum(len(v) for v in weekend.buckets.values())
     if total_events == 0:
-        logger.error("No events curated — aborting. Check API keys and network connectivity.")
+        logger.error(
+            "No events curated — aborting. Check API keys and network connectivity."
+        )
         return False
 
     logger.info(
@@ -149,6 +157,7 @@ async def run(dry_run: bool = False) -> bool:
 
 # ── Entry point ────────────────────────────────────────────────────────────────
 
+
 def main() -> None:
     args = sys.argv[1:]
     dry_run = "--dry-run" in args
@@ -172,9 +181,9 @@ def main() -> None:
 
 if __name__ == "__main__":
     import sentry_sdk as _sentry_sdk
+
     try:
         main()
     except Exception as _exc:
         _sentry_sdk.capture_exception(_exc)
         raise
-

@@ -7,7 +7,9 @@ scores them, filters the top N, and groups them into email-ready buckets.
 Imports fetchers and scoring engine from the downtime-backend package
 (installed as a pip dependency) instead of bundling a copy.
 """
+
 from motto_common.sentry_init import init_sentry  # was: import sentry_init
+
 init_sentry(agent_name="downtime-email-agent")
 
 import asyncio
@@ -114,6 +116,7 @@ def _generate_why_go(event: Event) -> str:
 
 # ── Bucket assignment ──────────────────────────────────────────────────────────
 
+
 def _assign_email_category(event: Event) -> str:
     """Assign an email display category to an event."""
     # Special case: free events that score below threshold go to Free Things
@@ -134,6 +137,7 @@ def _assign_email_category(event: Event) -> str:
 
 # ── Deduplication (mirrored from backend) ─────────────────────────────────────
 
+
 def _deduplicate(events: list[BackendEvent]) -> list[BackendEvent]:
     seen: dict[str, BackendEvent] = {}
     priority = {"ticketmaster": 4, "seatgeek": 3, "google": 2, "opentripmap": 1}
@@ -142,12 +146,15 @@ def _deduplicate(events: list[BackendEvent]) -> list[BackendEvent]:
         date_norm = (event.date_start or "")[:10]
         venue_norm = event.venue.lower().strip()[:30]
         key = f"{title_norm}|{date_norm}|{venue_norm}"
-        if key not in seen or priority.get(event.source, 0) > priority.get(seen[key].source, 0):
+        if key not in seen or priority.get(event.source, 0) > priority.get(
+            seen[key].source, 0
+        ):
             seen[key] = event
     return list(seen.values())
 
 
 # ── Weekend date range ─────────────────────────────────────────────────────────
+
 
 def _get_weekend_range() -> tuple[datetime, datetime, str, str]:
     """
@@ -172,12 +179,17 @@ def _get_weekend_range() -> tuple[datetime, datetime, str, str]:
 
 # ── Main curator ───────────────────────────────────────────────────────────────
 
-async def _fetch_all(city: str, state: str, lat: float, lon: float) -> list[BackendEvent]:
+
+async def _fetch_all(
+    city: str, state: str, lat: float, lon: float
+) -> list[BackendEvent]:
     """Fetch from all sources concurrently, tolerating individual failures."""
     tasks = [
         fetch_ticketmaster_events(city=city, state=state, lat=lat, lon=lon),
         fetch_seatgeek_events(city=city, state=state, lat=lat, lon=lon),
-        fetch_opentripmap_places(city=city, state=state, lat=lat, lon=lon, fetch_details=True),
+        fetch_opentripmap_places(
+            city=city, state=state, lat=lat, lon=lon, fetch_details=True
+        ),
         fetch_google_events(city=city, state=state, date_filter="this_week"),
     ]
     results = await asyncio.gather(*tasks, return_exceptions=True)
@@ -194,7 +206,9 @@ async def _fetch_all(city: str, state: str, lat: float, lon: float) -> list[Back
     return all_events
 
 
-def _filter_weekend(events: list[BackendEvent], friday: datetime, sunday: datetime) -> list[BackendEvent]:
+def _filter_weekend(
+    events: list[BackendEvent], friday: datetime, sunday: datetime
+) -> list[BackendEvent]:
     """Keep only events that fall on Friday, Saturday, or Sunday."""
     friday_str = friday.strftime("%Y-%m-%d")
     sunday_str = sunday.strftime("%Y-%m-%d")
@@ -264,7 +278,10 @@ async def curate_weekend(
     """
     # Load agent config by file path (backend config shadows module-level import)
     import importlib.util as _ilu
-    _cfg_spec = _ilu.spec_from_file_location("_agent_cfg", os.path.join(_AGENT_DIR, "config.py"))
+
+    _cfg_spec = _ilu.spec_from_file_location(
+        "_agent_cfg", os.path.join(_AGENT_DIR, "config.py")
+    )
     _agent_cfg = _ilu.module_from_spec(_cfg_spec)  # type: ignore
     _cfg_spec.loader.exec_module(_agent_cfg)  # type: ignore
     USER_INTERESTS = _agent_cfg.USER_INTERESTS
@@ -281,7 +298,9 @@ async def curate_weekend(
     logger.info(f"After deduplication: {len(deduped)}")
 
     # 3. Score
-    scored_backend = score_events(deduped, city_lat=lat, city_lon=lon, user_interests=USER_INTERESTS)
+    scored_backend = score_events(
+        deduped, city_lat=lat, city_lon=lon, user_interests=USER_INTERESTS
+    )
     logger.info(f"Scored {len(scored_backend)} events")
 
     # 4. Filter to weekend
@@ -290,7 +309,9 @@ async def curate_weekend(
 
     # If very few weekend events, fall back to all fetched events
     if len(weekend_events) < 5:
-        logger.warning(f"Only {len(weekend_events)} weekend events found — using all scored events")
+        logger.warning(
+            f"Only {len(weekend_events)} weekend events found — using all scored events"
+        )
         weekend_events = scored_backend
 
     # 5. Top N
@@ -337,6 +358,7 @@ async def curate_weekend(
 
 if __name__ == "__main__":
     import sentry_sdk as _sentry_sdk
+
     try:
         import config
 
@@ -358,4 +380,3 @@ if __name__ == "__main__":
     except Exception as _exc:
         _sentry_sdk.capture_exception(_exc)
         raise
-

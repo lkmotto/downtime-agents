@@ -1,6 +1,6 @@
 name: Friday Weekend Digest Email
 
-on: workflow_dispatch:
+on: workflow_dispatch
 
 jobs:
   send-digest:

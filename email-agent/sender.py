@@ -6,6 +6,7 @@ API key is read from RESEND_API_KEY environment variable.
 
 Resend docs: https://resend.com/docs/api-reference/emails/send-email
 """
+
 import logging
 import time
 import os
@@ -15,7 +16,9 @@ import httpx
 
 # Load agent config by absolute path to avoid backend config shadowing
 _AGENT_DIR = os.path.dirname(os.path.abspath(__file__))
-_cfg_spec = importlib.util.spec_from_file_location("agent_config", os.path.join(_AGENT_DIR, "config.py"))
+_cfg_spec = importlib.util.spec_from_file_location(
+    "agent_config", os.path.join(_AGENT_DIR, "config.py")
+)
 _cfg = importlib.util.module_from_spec(_cfg_spec)  # type: ignore
 _cfg_spec.loader.exec_module(_cfg)  # type: ignore
 RESEND_API_KEY: str = _cfg.RESEND_API_KEY
@@ -31,6 +34,7 @@ RETRY_BACKOFF_BASE = 2  # seconds
 
 class SendError(Exception):
     """Raised when email delivery fails after all retries."""
+
     pass
 
 
@@ -103,31 +107,35 @@ def send_email(
 
             # 429 = rate limit — back off and retry
             if resp.status_code == 429:
-                retry_after = int(resp.headers.get("Retry-After", RETRY_BACKOFF_BASE ** attempt))
-                logger.warning(f"Rate limited by Resend. Waiting {retry_after}s before retry.")
+                retry_after = int(
+                    resp.headers.get("Retry-After", RETRY_BACKOFF_BASE**attempt)
+                )
+                logger.warning(
+                    f"Rate limited by Resend. Waiting {retry_after}s before retry."
+                )
                 time.sleep(retry_after)
                 continue
 
             # 4xx errors (except 429) are not retryable
             if 400 <= resp.status_code < 500:
                 error_body = resp.text
-                raise SendError(
-                    f"Resend API error {resp.status_code}: {error_body}"
-                )
+                raise SendError(f"Resend API error {resp.status_code}: {error_body}")
 
             # 5xx — retry
             logger.warning(f"Resend server error {resp.status_code}. Retrying...")
-            last_error = SendError(f"Resend server error {resp.status_code}: {resp.text}")
-            time.sleep(RETRY_BACKOFF_BASE ** attempt)
+            last_error = SendError(
+                f"Resend server error {resp.status_code}: {resp.text}"
+            )
+            time.sleep(RETRY_BACKOFF_BASE**attempt)
 
         except httpx.TimeoutException as e:
             logger.warning(f"Request timeout on attempt {attempt}: {e}")
             last_error = e
-            time.sleep(RETRY_BACKOFF_BASE ** attempt)
+            time.sleep(RETRY_BACKOFF_BASE**attempt)
         except httpx.RequestError as e:
             logger.warning(f"Network error on attempt {attempt}: {e}")
             last_error = e
-            time.sleep(RETRY_BACKOFF_BASE ** attempt)
+            time.sleep(RETRY_BACKOFF_BASE**attempt)
         except SendError:
             raise  # Non-retryable — bubble up immediately
 
@@ -162,7 +170,10 @@ def send_test_email(to: Optional[str] = None) -> dict:
 
 if __name__ == "__main__":
     import sys
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
+
+    logging.basicConfig(
+        level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s"
+    )
 
     test_to = sys.argv[1] if len(sys.argv) > 1 else None
     try:
