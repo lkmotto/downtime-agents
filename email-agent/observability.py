@@ -1,6 +1,6 @@
 """OpenTelemetry + Langfuse observability scaffolding.
 
-Call ``init_observability()`` once at startup right before ``import sentry_init``
+Call ``init_observability()`` once at startup right before ``from motto_common.sentry_init import init_sentry``
 (or right after it — order does not matter). Every LLM call wrapped in
 ``@traced`` (or manually with ``tracer.start_as_current_span``) is then visible
 in Langfuse with cost, latency, prompt, and completion.
@@ -15,6 +15,9 @@ sends authenticated traces. If they are missing the exporter still starts but
 will receive unauthenticated requests (Langfuse will reject them).
 """
 from __future__ import annotations
+
+from motto_common.sentry_init import init_sentry  # was: import sentry_init
+init_sentry(agent_name="downtime-email-agent")
 
 import os
 from base64 import b64encode

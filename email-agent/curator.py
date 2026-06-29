@@ -7,14 +7,14 @@ scores them, filters the top N, and groups them into email-ready buckets.
 Imports fetchers and scoring engine from the downtime-backend package
 (installed as a pip dependency) instead of bundling a copy.
 """
-import sentry_init  # noqa: E402,F401
+from motto_common.sentry_init import init_sentry  # was: import sentry_init
+init_sentry(agent_name="downtime-email-agent")
 
 import asyncio
 import logging
 import os
 import importlib.util
-from datetime import datetime, timedelta, timezone
-from typing import Optional
+from datetime import datetime, timedelta
 
 # ── Load agent models ─────────────────────────────────────────────────────────
 import models as _agent_models_mod

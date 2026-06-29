@@ -14,12 +14,12 @@ Usage:
     python agent.py --dry-run  # Curate + compose but don't send
     python agent.py --test     # Send a test email only
 """
-import sentry_init  # noqa: E402,F401
+from motto_common.sentry_init import init_sentry  # was: import sentry_init
+init_sentry(agent_name="downtime-email-agent")
 
 import asyncio
 import logging
 import sys
-import os
 import time
 from datetime import datetime
 from pathlib import Path
