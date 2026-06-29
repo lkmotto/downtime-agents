@@ -1,0 +1,32 @@
+name: Daily Event Collection
+
+on:
+  schedule:
+    # 6am CT = 11:00 UTC
+    - cron: '0 11 * * *'
+  workflow_dispatch:  # manual trigger
+
+jobs:
+  collect-events:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    container:
+      image: ghcr.io/${{ github.repository }}:latest
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+      env:
+        BACKEND_URL: ${{ secrets.BACKEND_URL }}
+        BACKEND_API_KEY: ${{ secrets.BACKEND_API_KEY }}
+        EVENTBRITE_TOKEN: ${{ secrets.EVENTBRITE_TOKEN }}
+        DATA_DIR: /tmp/data
+    steps:
+      - name: Run event collection
+        run: python -m agent
+      - name: Upload data artifacts
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: event-data-${{ github.run_number }}
+          path: /tmp/data/
+          retention-days: 7
