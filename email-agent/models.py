@@ -10,9 +10,10 @@ from pydantic import BaseModel, Field
 from datetime import datetime
 
 
-# ── Re-export the canonical Event model ───────────────────────────────────────
-# We import directly from the backend to keep models in sync.
-# curator.py adds sys.path so this import resolves correctly.
+# ── Agent-side Event model ────────────────────────────────────────────────────
+# The agent maintains its own Event model for email-specific fields
+# (email_category, why_go). Backend models are imported from the
+# downtime-backend package installed as a dependency.
 
 class Event(BaseModel):
     """Mirror of the backend Event model — kept in sync manually."""

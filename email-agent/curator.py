@@ -4,46 +4,31 @@ Event Curator for the DownTime Weekend Email Digest.
 Fetches events for Dallas-Fort Worth this weekend (Friday–Sunday),
 scores them, filters the top N, and groups them into email-ready buckets.
 
-Imports fetchers and scoring engine directly from the backend codebase
-(path added via sys.path) so there's no duplication of logic.
+Imports fetchers and scoring engine from the downtime-backend package
+(installed as a pip dependency) instead of bundling a copy.
 """
 import sentry_init  # noqa: E402,F401
 
 import asyncio
 import logging
-import sys
 import os
 import importlib.util
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
-# ── Load agent models BEFORE touching sys.path ────────────────────────────────
-# We must import agent models by absolute file path to avoid them being
-# shadowed by the backend's models.py once BACKEND_DIR is on sys.path.
+# ── Load agent models ─────────────────────────────────────────────────────────
+import models as _agent_models_mod
+
+Event = _agent_models_mod.Event
+CuratedWeekend = _agent_models_mod.CuratedWeekend
+CATEGORY_BUCKET_MAP = _agent_models_mod.CATEGORY_BUCKET_MAP
+CATEGORY_FALLBACK_MAP = _agent_models_mod.CATEGORY_FALLBACK_MAP
+EMAIL_CATEGORIES = _agent_models_mod.EMAIL_CATEGORIES
+
 _AGENT_DIR = os.path.dirname(os.path.abspath(__file__))
-_agent_models_spec = importlib.util.spec_from_file_location(
-    "agent_models",
-    os.path.join(_AGENT_DIR, "models.py"),
-)
-_agent_models = importlib.util.module_from_spec(_agent_models_spec)  # type: ignore
-_agent_models_spec.loader.exec_module(_agent_models)  # type: ignore
 
-Event = _agent_models.Event
-CuratedWeekend = _agent_models.CuratedWeekend
-CATEGORY_BUCKET_MAP = _agent_models.CATEGORY_BUCKET_MAP
-CATEGORY_FALLBACK_MAP = _agent_models.CATEGORY_FALLBACK_MAP
-EMAIL_CATEGORIES = _agent_models.EMAIL_CATEGORIES
-
-# ── Resolve backend path ───────────────────────────────────────────────────────
-# Backend modules are bundled in the local backend/ directory
-BACKEND_DIR = os.path.join(_AGENT_DIR, "backend")
-BACKEND_DIR = os.path.abspath(BACKEND_DIR)
-if BACKEND_DIR not in sys.path:
-    sys.path.insert(0, BACKEND_DIR)
-
-# ── Now we can import backend modules ─────────────────────────────────────────
-# NOTE: after this point, bare `import models` resolves to the backend's models.
-import config as backend_config  # noqa: E402 — must come after sys.path patch
+# ── Backend imports (from downtime-backend package, installed as a dependency) ─
+import downtime_backend.config as backend_config
 
 # Monkey-patch backend config keys from our agent env vars so fetchers pick them up
 _agent_cfg_spec = importlib.util.spec_from_file_location(
@@ -59,12 +44,12 @@ backend_config.OTM_API_KEY = _agent_config_raw.OTM_API_KEY
 backend_config.FETCH_DAYS_AHEAD = _agent_config_raw.FETCH_DAYS_AHEAD
 backend_config.FETCH_PAGE_SIZE = _agent_config_raw.FETCH_PAGE_SIZE
 
-from fetchers.ticketmaster import fetch_ticketmaster_events  # noqa: E402
-from fetchers.seatgeek import fetch_seatgeek_events          # noqa: E402
-from fetchers.serpapi_google import fetch_google_events      # noqa: E402
-from fetchers.opentripmap import fetch_opentripmap_places    # noqa: E402
-from scoring import score_events                             # noqa: E402
-from models import Event as BackendEvent                     # noqa: E402
+from downtime_backend.fetchers.ticketmaster import fetch_ticketmaster_events
+from downtime_backend.fetchers.seatgeek import fetch_seatgeek_events
+from downtime_backend.fetchers.serpapi_google import fetch_google_events
+from downtime_backend.fetchers.opentripmap import fetch_opentripmap_places
+from downtime_backend.scoring import score_events
+from downtime_backend.models import Event as BackendEvent
 
 logger = logging.getLogger(__name__)
 

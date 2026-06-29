@@ -35,8 +35,7 @@ logger = logging.getLogger("downtime-agent")
 
 
 # ── Import config early so env vars are loaded ─────────────────────────────────
-# Load by absolute path so the backend config.py (injected by curator.py
-# into sys.path) doesn't shadow our agent config.
+# Load by absolute path to avoid shadowing from any other config modules.
 import importlib.util as _ilu
 import os as _os
 _AGENT_DIR = _os.path.dirname(_os.path.abspath(__file__))

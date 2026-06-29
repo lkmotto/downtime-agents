@@ -9,6 +9,10 @@ pydantic==2.7.1
 # Environment variable loading
 python-dotenv==1.0.1
 
+# Shared downtime-backend package (fetchers, scoring, models)
+# Replaces the previously bundled backend/ copy
+downtime-backend @ git+https://github.com/lkmotto/downtime-backend.git
+
 # Resend SDK (optional, we use httpx directly but include for reference)
 # resend==2.3.0
 

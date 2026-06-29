@@ -140,7 +140,7 @@ agent.py (orchestrator)
           └── Resend API → ljm32901@gmail.com
 ```
 
-The agent imports the backend fetchers and scoring engine directly via `sys.path` injection, keeping all logic in one place with no duplication.
+The agent imports backend fetchers and scoring engine from the `downtime-backend` package (installed as a pip dependency), keeping all logic in one place with no duplication.
 
 ---
 
