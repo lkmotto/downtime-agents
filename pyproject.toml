@@ -1,6 +1,12 @@
 [project]
 name = "downtime-agents"
+version = "0.1.0"
 requires-python = ">=3.12"
+dependencies = [
+    "httpx>=0.28.1",
+    "pydantic>=2.13.4",
+    "python-dotenv>=1.2.2",
+]
 
 [project.optional-dependencies]
 dev = [
@@ -29,3 +35,10 @@ exclude_lines = [
     "@(abc\\.)?abstractmethod",
 ]
 show_missing = true
+
+[tool.setuptools.packages.find]
+include = ["email-agent*", "event-agent*"]
+
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
