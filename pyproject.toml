@@ -18,6 +18,12 @@ dev = [
 testpaths = ["tests"]
 pythonpath = ["."]
 
+[tool.mypy]
+strict = true
+warn_unused_configs = true
+warn_redundant_casts = true
+warn_no_return = true
+
 [tool.coverage.run]
 source = ["email-agent", "event-agent"]
 omit = ["tests/*"]
